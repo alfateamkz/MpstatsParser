@@ -1,0 +1,22 @@
+﻿<Window x:Class="MpstatsParser.Views.ParserSettings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MpstatsParser.Views"
+        mc:Ignorable="d"
+        Title="Настройки парсера" Height="182" Width="406" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <TextBlock HorizontalAlignment="Left" Margin="10,17,0,0" Text="Искать SKU с выручкой > x 6/21" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <TextBox HorizontalAlignment="Left" TextAlignment="Center" Text="{Binding SkuPriceFrom,Mode=TwoWay}" TextWrapping="Wrap" VerticalAlignment="Top" Width="84" Margin="304,17,0,0"/>
+        <TextBlock HorizontalAlignment="Left" Margin="10,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top">
+            <Run>Путь для сохранения результатов парсинга</Run><LineBreak/>
+            <Run Text="{Binding ResultsFilePath,Mode=TwoWay}"></Run>
+        </TextBlock>
+        <Button Content="Выбрать путь" Command="{Binding SelectResultsFilepath}" HorizontalAlignment="Left" Margin="304,44,0,0" VerticalAlignment="Top" Width="84"/>
+        <TextBlock HorizontalAlignment="Left" Margin="10,75,0,0" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="API ключ"/><LineBreak/><Run Text="{Binding APIKey,Mode=TwoWay}"/></TextBlock>
+        <Button Content="Изменить" Command="{Binding SelectApiKey}" HorizontalAlignment="Left" Margin="304,81,0,0" VerticalAlignment="Top" Width="84"/>
+        <Button Content="Сохранить изменения" Command="{Binding SaveChanges}" HorizontalAlignment="Left" Margin="212,118,0,0" VerticalAlignment="Top" Height="23" Width="176"/>
+
+    </Grid>
+</Window>
