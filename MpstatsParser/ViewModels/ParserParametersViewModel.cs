@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32;
 using System.Windows.Forms;
-
+using System.Threading.Tasks;
 
 namespace MpstatsParser.ViewModels
 {
@@ -14,11 +14,7 @@ namespace MpstatsParser.ViewModels
 
         public ParserParametersViewModel()
         {
-            var parameters = Models.ParserParameters.GetParserParameters();
-            this.APIKey = parameters.APIKey;
-            this.ResultsFilePath = parameters.FileResultPath;
-            this.SkuPriceFrom = parameters.SKUPriceFrom;
-
+            UpdateData();
         }
 
         private string aPIKey;
@@ -66,6 +62,8 @@ namespace MpstatsParser.ViewModels
                         if (dialog.ShowDialog() == DialogResult.OK)
                         {
                             ResultsFilePath = dialog.SelectedPath;
+                            Models.ParserParameters.Params.FileResultPath = ResultsFilePath;
+                            Models.ParserParameters.SaveParameters();
                         }
                     }));
             }
@@ -104,6 +102,19 @@ namespace MpstatsParser.ViewModels
                         }
                     }));
             }
+        }
+        async Task UpdateData()
+        {
+            while (true)
+            {
+                SaveChanges.Execute(null);
+                var parameters = Models.ParserParameters.GetParserParameters();
+                this.APIKey = parameters.APIKey;
+                this.ResultsFilePath = parameters.FileResultPath;
+                this.SkuPriceFrom = parameters.SKUPriceFrom;
+                await Task.Delay(250);
+            }
+        
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

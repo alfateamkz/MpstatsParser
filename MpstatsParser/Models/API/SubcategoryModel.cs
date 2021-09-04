@@ -4,14 +4,15 @@ using System.Text;
 
 namespace MpstatsParser.Models.API
 {
-    public class SubcategoryModel
+    public class SubcategoryModel : RubricatorItemModel
     {
-        public string Name { get; set; }
-        public int ItemsNumber { get; set; }
-        public int SalesNumber { get; set; }
-        public long Revenue { get; set; }
-        public double CommentsAverage { get; set; }
-        public double Rating { get; set; }
+        new public List<SubcategoryModel> Subcategories { get; set; }
+        new public string Name { get; set; }
+        public int? ItemsNumber { get; set; }
+        public int? SalesNumber { get; set; }
+        public double? Revenue { get; set; }
+        public double? CommentsAverage { get; set; }
+        public double? Rating { get; set; }
 
         public override string ToString()
         {
