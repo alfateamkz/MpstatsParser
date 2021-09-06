@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MpstatsParser"
         mc:Ignorable="d"
-        Title="Парсер Mpstats" Height="234" Width="370" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Парсер Mpstats" Height="234" Width="370" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Closing="Window_Closing">
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" Text="Статус работы парсера : " TextWrapping="Wrap" VerticalAlignment="Top"/>
         <TextBlock HorizontalAlignment="Left" Margin="10,26,0,0" Text="{Binding ParserStatusText,Mode=TwoWay}" TextWrapping="Wrap" VerticalAlignment="Top" Width="118"/>
         <Button Command="{Binding StartOrStopParser}" Content="{Binding ParserStartStopButtonText,Mode=TwoWay}" HorizontalAlignment="Left" Margin="276,10,0,0" VerticalAlignment="Top" Width="84" Height="20"/>
         <Button IsEnabled="{Binding ParserPauseButtonAccessibility,Mode=TwoWay}" Command="{Binding SuspendParsing}" Content="{Binding ParserPauseButtonText,Mode=TwoWay}" HorizontalAlignment="Left" Margin="187,10,0,0" VerticalAlignment="Top" Width="84" Height="20"/>
-        <Button Command="{Binding OpenSettings}" Content="Настройки" HorizontalAlignment="Left" Margin="276,188,0,0" VerticalAlignment="Top" Width="84"/>
+        <Button Command="{Binding OpenSettings}" Content="Настройки" HorizontalAlignment="Left" Margin="276,168,0,0" VerticalAlignment="Top" Width="84"/>
         <TextBlock HorizontalAlignment="Left" Margin="10,93,0,0" Text="Прогресс : " TextWrapping="Wrap" VerticalAlignment="Top" Width="71"/>
         <TextBlock HorizontalAlignment="Left" Margin="10,109,0,0" Text="Выполняемое действие : " TextWrapping="Wrap" VerticalAlignment="Top" Width="158"/>
         <TextBlock HorizontalAlignment="Left" TextAlignment="Right" Margin="74,93,0,0" Text="{Binding Progress,Mode=TwoWay}" TextWrapping="NoWrap" VerticalAlignment="Top" Width="42"/>

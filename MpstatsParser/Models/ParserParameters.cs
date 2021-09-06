@@ -6,6 +6,7 @@ using MpstatsParser.Models.API;
 using MpstatsParser.Models.Excel;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace MpstatsParser.Models
 {
@@ -30,6 +31,22 @@ namespace MpstatsParser.Models
                 }
             }
         }
+        public static async Task SaveParametersAsync()
+        {
+            await Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
+            {
+                Services.MpstatsAPI.APIKey = Params.APIKey;
+                using (StreamWriter sw = new StreamWriter(FilePath))
+                {
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        serializer.Serialize(writer, Params);
+                    }
+                }
+            });
+            
+        }
+
         public static void RestoreParameters()
         {
             if (File.Exists(FilePath))
