@@ -247,6 +247,61 @@ namespace MpstatsParser.Services
             }
         }
 
+        public static List<CategoryTrendModel> GetCategoryTrends(string path, DateTime d1, DateTime d2)
+        {
+            if (!CheckNet())
+            {
+                throw new NoInternetConnectionException();
+            }
+
+            if (!string.IsNullOrEmpty(APIKey))
+            {
+                RestClient client = new RestClient("https://mpstats.io/api/wb/get/category/trends" +
+                   $"?d1={d1.ToString("yyyy-MM-dd")}&d2={d2.ToString("yyyy-MM-dd")}" +
+                   $"&path={path}");
+                request = new RestRequest(Method.GET);
+                request.AddHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*" +
+                        "/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+                request.AddHeader("Content-Type", "application/json; charset=utf-8");
+                request.AddHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 OPR/78.0.4093.184 (Edition utorrent)");
+                request.AddHeader("X-Mpstats-TOKEN", APIKey);
+                response = client.Execute(request);
+
+                StatusCodeChecker.CheckStatusCode((int)response.StatusCode);
+                while (((int)response.StatusCode) == 202)
+                {
+                    response = client.Execute(request);
+                }
+                dynamic resp = JsonConvert.DeserializeObject(response.Content);
+                List<CategoryTrendModel> items = new List<CategoryTrendModel>();
+                foreach (var i in resp)
+                {
+                    CategoryTrendModel item = new CategoryTrendModel
+                    {
+                        Sales = i.sales,
+                        ProductRevenue = i.product_revenue,
+                        Items = i.items,
+                        Brands = i.brands,
+                        Sellers = i.sellers,
+                        Revenue = i.revenue,
+                        ProductWithSells = i.items_with_sells
+                    };
+                    DateTime week = default;
+                    if (DateTime.TryParse(i.week,out week)) { }
+                    item.Week = week;
+                    items.Add(item);
+                }
+                //      System.Windows.MessageBox.Show(response.StatusCode.ToString());
+                return items;
+            }
+            else
+            {
+                throw new NoAPIKeyException();
+            }
+        }
+
+
 
 
 

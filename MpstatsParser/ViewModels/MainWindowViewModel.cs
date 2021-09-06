@@ -6,8 +6,10 @@ using System.Runtime.CompilerServices;
 using MpstatsParser.Services;
 using MpstatsParser.Models.API;
 using MpstatsParser.Models;
+using MpstatsParser.Models.Excel;
 using System.Windows;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace MpstatsParser.ViewModels
 {
@@ -165,119 +167,161 @@ namespace MpstatsParser.ViewModels
             get
             {
                 return startOrStopParser ??
-                    (startOrStopParser = new RelayCommand(obj =>
+                    (startOrStopParser = new RelayCommand(async obj =>
                     {
                         int i = 0;
                         if (!ParserParameters.Params.IsStarted)
                         {
-                            ParseCategories();
+                            ParserParameters.Params.IsStarted = true;
+                            ParserParameters.Params.IsSuspended = false;
+                            await StartParsing();
+                            await ExportReportToExcel.Export(ParserParameters.Params.FileResultPath,
+                                ParserParameters.Params.ExcelReportRows);
+                            MessageBox.Show("Парсинг успешно завершен,\n" +
+                                $"Файл с отчетом находится по пути :\n" +
+                                @$"{ParserParameters.Params.FileResultPath}\Report.xlsx","Уведомление",
+                                MessageBoxButton.OK,MessageBoxImage.Information);
+                            await ParserParameters.ResetParserParameters();
                         }
                         else
                         {
                             if (MessageBox.Show("Вы действительно хотите остановить парсинг?", "Предупреждение", MessageBoxButton.YesNo)
                             == MessageBoxResult.Yes)
                             {
-                                ParserParameters.Params.Categories = new List<SubcategoryModel>();
-                                ParserParameters.Params.CurrentCategoryIndex = -1;
-                                ParserParameters.Params.IsSuspended = false;
-                                ParserParameters.Params.IsStarted = false;
-                                
 
-                          
+                               await ParserParameters.ResetParserParameters();
                             }
-
-                            
+                           
                         }
                         ParserParameters.SaveParameters();
                         UpdateInterface();
                     }));
             }
         }
-        async Task ParseCategories()
+
+      
+        private async Task StartParsing()
         {
-            int i = 0;
-            ParserParameters.Params.IsStarted = true;
-            ParserParameters.Params.IsSuspended = false;
+          await GetCategoriesFromAPI(ParserParameters.Params.GetCategoriesIteration);
+          await GetAllSubcategoryDetailsFromAPI(ParserParameters.Params.GetSubcategoryInfoIteration);
+        }
+        async Task GetCategoriesFromAPI(int iteration = 0)
+        {
 
             ParserParameters.Params.Rubricator = MpstatsAPI.GetRubricator();
             try
             {
-                foreach (var rub in ParserParameters.Params.Rubricator)
+                bool isPaused = false;
+                while (ParserParameters.Params.IsStarted)
                 {
-                    SubcategoryModel subcategory = new SubcategoryModel
+                    if (ParserParameters.Params.IsCategoriesGot)
                     {
-                        Subcategories = MpstatsAPI.GetSubcategoryInfo(rub.Path, default, DateTime.Now)
-                    };
-                    CurrentAction = $"Загрузка списка категорий : {rub.Name}";
-                    i++; System.Diagnostics.Debug.WriteLine(i +"  " + rub.Path );
-                    ParserParameters.Params.Categories.Add(subcategory);
-                }
+                        break;
+                    }
+                    while (!ParserParameters.Params.IsSuspended)
+                    {
+                        
+                        for (int i=iteration; i< ParserParameters.Params.Rubricator.Count; i++)
+                        {
+
+                            isPaused = false;
+                            var rub = ParserParameters.Params.Rubricator[i];
+                            CurrentAction = $"Загрузка списка категорий : {rub.Path}";
+                            SubcategoryModel subcategory = new SubcategoryModel
+                            {
+                                Subcategories = MpstatsAPI.GetSubcategoryInfo(rub.Path, default, DateTime.Now)
+                            };
+                            i++; System.Diagnostics.Debug.WriteLine(i + "  " + rub.Path);
+                            ParserParameters.Params.Categories.Add(subcategory);
+                        }        
+                    }
+                    if (!isPaused)
+                    {
+                        isPaused = true;
+                        ParserParameters.SaveParameters();                  
+                    }           
+                }           
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex.Message); }
-          
-            System.Diagnostics.Debug.WriteLine("говно");
-            //try
-            //{
-            //    foreach (var cat in ParserParameters.Params.Categories)
-            //    {
-            //        cat.Subcategories = MpstatsAPI.GetSubcategoryInfo(cat.Name, default, DateTime.Now);
-            //        i += cat.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + cat.Name);
-            //        if (cat.Subcategories.Count > 0)
-            //        {
-            //            foreach (var c in cat.Subcategories)
-            //            {
-            //                c.Subcategories = MpstatsAPI.GetSubcategoryInfo(c.Name, default, DateTime.Now);
-            //                i += c.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c.Name);
-            //                if (c.Subcategories.Count > 0)
-            //                {
-            //                    foreach (var c2 in c.Subcategories)
-            //                    {
-            //                        c2.Subcategories = MpstatsAPI.GetSubcategoryInfo(c2.Name, default, DateTime.Now);
-            //                        i += c2.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c2.Name);
-            //                        if (c2.Subcategories.Count > 0)
-            //                        {
-            //                            foreach (var c3 in c2.Subcategories)
-            //                            {
-            //                                c3.Subcategories = MpstatsAPI.GetSubcategoryInfo(c3.Name, default, DateTime.Now);
-            //                                i += c3.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c3.Name);
-            //                                if (c3.Subcategories.Count > 0)
-            //                                {
-            //                                    foreach (var c4 in c3.Subcategories)
-            //                                    {
-            //                                        c4.Subcategories = MpstatsAPI.GetSubcategoryInfo(c4.Name, default, DateTime.Now);
-            //                                        i += c4.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c4.Name);
-            //                                        if (c4.Subcategories.Count > 0)
-            //                                        {
-            //                                            foreach (var c5 in c4.Subcategories)
-            //                                            {
-            //                                                c5.Subcategories = MpstatsAPI.GetSubcategoryInfo(c5.Name, default, DateTime.Now);
-            //                                                i += c5.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c5.Name);
-            //                                                if (c5.Subcategories.Count > 0)
-            //                                                {
-            //                                                    foreach (var c6 in c5.Subcategories)
-            //                                                    {
-            //                                                        c6.Subcategories = MpstatsAPI.GetSubcategoryInfo(c6.Name, default, DateTime.Now);
-            //                                                        i += c6.Subcategories.Count; System.Diagnostics.Debug.WriteLine(i + "  " + c6.Name);
-            //                                                    }
-            //                                                }
-            //                                            }
-            //                                        }
-            //                                    }
-            //                                }
-            //                            }
-            //                        }
-            //                    }
-            //                }
-
-            //            }
-            //        }
-            //    }
-
-            //}
-            //catch(Exception ex) { System.Diagnostics.Debug.WriteLine(ex.Message); }
             ParserParameters.SaveParameters();
-            MessageBox.Show(i.ToString());
+            System.Diagnostics.Debug.WriteLine("Информация о категориях спарсена");
         }
+
+        async Task GetAllSubcategoryDetailsFromAPI(int iteration = 0)
+        {
+            try
+            {
+                bool isPaused = false;
+                ParserParameters.Params.ExcelReportRows = new List<ExcelRowModel>();
+                for (int i=iteration;i< ParserParameters.Params.Categories.Count; i++)
+                {
+                    while (ParserParameters.Params.IsStarted)
+                    {
+                        while (!ParserParameters.Params.IsSuspended)
+                        {
+                            isPaused = false;
+                            var cat = ParserParameters.Params.Categories[i];
+                            CurrentAction = $"Получение информации о категории : {cat.Path}";
+                            ExcelRowModel row = new ExcelRowModel();
+                            row.Category = cat.Path;
+                            // 1.Выручка 6 / 20 - Выручка 6 / 21
+                            // Выручка в данной категории за месяц.
+                            //Пример.В подкатегории Аксессуары / Сумки и рюкзаки/ Рюкзаки
+                            //выбираем длину периода 01.03.2021 – 31.03.2021 и вкладку «Продавцы», см ниже
+                            var first = MpstatsAPI.GetCategorySellers(cat.Path, new DateTime(2020, 6, 1), new DateTime(2020, 6, 30));
+                            row.Revenue6_20 = first.Sum(o => o.Revenue).ToString();
+                            first = MpstatsAPI.GetCategorySellers(cat.Path, new DateTime(2021, 6, 1), new DateTime(2021, 6, 30));
+                            row.Revenue6_21 = first.Sum(o => o.Revenue).ToString();
+                            //2.	Столбцы: Выруч 6/21 Топ1, Выруч 6/21 Топ2, Выруч 6/21 Топ3, Выруч 6/21 Топ4, Выруч 6/21 Остальные.
+                            //Это выручка за июнь 2021 года, с 1.06.2021 по 30.06.2021 самых крупных поставщиков.
+                            row.Revenue6_21_Top1 = first[0].Revenue.ToString();
+                            row.Revenue6_21_Top2 = first[1].Revenue.ToString();
+                            row.Revenue6_21_Top3 = first[2].Revenue.ToString();
+                            row.Revenue6_21_Top4 = first[3].Revenue.ToString();
+                            row.Revenue6_21_Other = first.Skip(4).Sum(o => o.Revenue).ToString();
+                            //3.Столбец «SKU с продажами 6 / 21»
+                            //Выбираем в подкатегории Аксессуары/ Сумки и рюкзаки/ Рюкзаки длину периода 01.06.2021 – 30.06.2021 и вкладку «Товары».
+                            //Далее выбираем Фильтры->Выручка->Больше чем 0->Применить.
+                            var third = MpstatsAPI.GetCategoryProducts(cat.Path, new DateTime(2021, 6, 1), new DateTime(2021, 6, 30))
+                                .Where(o => o.Revenue > 0).ToList();
+                            row.SKU6_21 = third.Count.ToString();
+                            //4.	Столбец «Кол-во SKU с выручкой > x 6/21»
+                            //Перед парсингом в парсере мне необходимо иметь возможность задать это значение х.
+                            //К примеру, я задам 200 000.
+                            var fourth = third.Where(o => o.Revenue > ParserParameters.Params.SKUPriceFrom).ToList();
+                            row.SKU6_21_X = fourth.Count.ToString();
+                            //5.	Столбцы «Товаров с продажами 13.7.20-19.7.20», «Товаров с продажами 11.1.21-17.1.21»,
+                            //«Товаров с продажами 5.7.21-11.7.21». Столбцы «Выручка на товар 13.7.20-19.7.20»,
+                            //«Выручка на товар 11.1.21-17.1.21», «Выручка на товар 5.7.21-11.7.21»
+                            var fifth = MpstatsAPI.GetCategoryTrends(cat.Path, new DateTime(2020, 7, 13), new DateTime(2020, 7, 19));
+                            row.ProductWithSalesQuantity13_19july20 = fifth[0].Items.ToString();
+                            row.ProductWithSalesRevenue13_19july20 = fifth[0].ProductRevenue.ToString();
+                            fifth = MpstatsAPI.GetCategoryTrends(cat.Path, new DateTime(2021, 7, 5), new DateTime(2021, 7, 11));
+                            row.ProductWithSalesQuantity5_11july21 = fifth[0].Items.ToString();
+                            row.ProductWithSalesRevenue5_11july21 = fifth[0].ProductRevenue.ToString();
+                            fifth = MpstatsAPI.GetCategoryTrends(cat.Path, new DateTime(2021, 1, 11), new DateTime(2021, 1, 17));
+                            row.ProductWithSalesQuantity11_17january21 = fifth[0].Items.ToString();
+                            row.ProductWithSalesRevenue11_17january21 = fifth[0].ProductRevenue.ToString();
+
+                            ParserParameters.Params.ExcelReportRows.Add(row);
+                            System.Diagnostics.Debug.WriteLine($"{iteration}  {cat.Path}");
+                        }
+                        if (!isPaused)
+                        {
+                            isPaused = true;
+                            ParserParameters.SaveParameters();
+                        }
+                    }
+                }
+                ParserParameters.SaveParameters();
+                System.Diagnostics.Debug.WriteLine("Парсинг завершен???");
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex.Message); }
+        }
+
+
+
+
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {

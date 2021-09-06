@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using MpstatsParser.Models.API;
+using MpstatsParser.Models.Excel;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace MpstatsParser.Models
 {
@@ -39,16 +41,49 @@ namespace MpstatsParser.Models
                 Services.MpstatsAPI.APIKey = Params.APIKey;
             }
         }
+
+        public static async Task ResetParserParameters()
+        {
+            ParserParameters.Params.CurrentCategoryIndex = -1;
+            ParserParameters.Params.IsSuspended = false;
+            ParserParameters.Params.IsStarted = false;
+
+            ParserParameters.Params.Categories = new List<SubcategoryModel>();
+            ParserParameters.Params.ExcelReportRows = new List<ExcelRowModel>();
+            ParserParameters.Params.GetCategoriesIteration = default;
+            ParserParameters.Params.GetSubcategoryInfoIteration = default;
+            ParserParameters.Params.IsCategoriesGot = default;
+            ParserParameters.Params.IsSubcategoryInfoGot = default;
+            ParserParameters.Params.Rubricator = new List<RubricatorItemModel>();
+        }
+
         public class ThisParameters
         {
+            //Настройка парсера в интерфейсе программы
             public string FileResultPath { get; set; }
             public string APIKey { get; set; }
             public double SKUPriceFrom { get; set; }
+
+            //Промежуточная информация
             public List<RubricatorItemModel> Rubricator { get; set;}
             public List<SubcategoryModel> Categories { get; set; }
-            public int CurrentCategoryIndex { get; set; }
+            public List<ExcelRowModel> ExcelReportRows { get; set; }
+   
+
+            //Управление работой парсера
             public bool IsStarted { get; set; }
             public bool IsSuspended { get; set; }
+            
+
+            //Переменнные для возобновления работы парсера при повторном запуске программы
+            public int GetCategoriesIteration { get; set; }
+            public bool IsCategoriesGot { get; set; }
+            public int GetSubcategoryInfoIteration { get; set; }
+            public bool IsSubcategoryInfoGot { get; set; }
+
+            [Obsolete]
+            public int CurrentCategoryIndex { get; set; }
+
         }
     }
 }
