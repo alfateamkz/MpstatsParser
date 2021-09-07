@@ -212,35 +212,35 @@ namespace MpstatsParser.ViewModels
                 return startOrStopParser ??
                     (startOrStopParser = new RelayCommand(async obj =>
                     {
-                       await Dispatcher.CurrentDispatcher.InvokeAsync(async () =>
-                        {
-                            int i = 0;
-                            if (!ParserParameters.Params.IsStarted)
-                            {
-                                ParserParameters.Params.IsStarted = true;
-                                ParserParameters.Params.IsSuspended = false;
-                                await StartParsing();
-                                await ExportReportToExcel.Export(ParserParameters.Params.FileResultPath,
-                                    ParserParameters.Params.ExcelReportRows);
-                                MessageBox.Show("Парсинг успешно завершен,\n" +
-                                    $"Файл с отчетом находится по пути :\n" +
-                                    @$"{ParserParameters.Params.FileResultPath}\Report.xlsx", "Уведомление",
-                                    MessageBoxButton.OK, MessageBoxImage.Information);
-                                await ParserParameters.ResetParserParameters();
-                            }
-                            else
-                            {
-                                if (MessageBox.Show("Вы действительно хотите остановить парсинг?", "Предупреждение", MessageBoxButton.YesNo)
-                                == MessageBoxResult.Yes)
-                                {
+                       //await Task.Run((Action) (async () =>
+                       //{
+                           int i = 0;
+                           if (!ParserParameters.Params.IsStarted)
+                           {
+                               ParserParameters.Params.IsStarted = true;
+                               ParserParameters.Params.IsSuspended = false;
+                               await StartParsing();
+                               await ExportReportToExcel.Export(ParserParameters.Params.FileResultPath,
+                                   ParserParameters.Params.ExcelReportRows);
+                               MessageBox.Show("Парсинг успешно завершен,\n" +
+                                               $"Файл с отчетом находится по пути :\n" +
+                                               @$"{ParserParameters.Params.FileResultPath}\Report.xlsx", "Уведомление",
+                                   MessageBoxButton.OK, MessageBoxImage.Information);
+                               await ParserParameters.ResetParserParameters();
+                           }
+                           else
+                           {
+                               if (MessageBox.Show("Вы действительно хотите остановить парсинг?", "Предупреждение", MessageBoxButton.YesNo)
+                                   == MessageBoxResult.Yes)
+                               {
 
-                                    await ParserParameters.ResetParserParameters();
-                                }
+                                   await ParserParameters.ResetParserParameters();
+                               }
 
-                            }
-                            await ParserParameters.SaveParametersAsync();
-                            await UpdateInterfaceAsync();
-                        });
+                           }
+                           await ParserParameters.SaveParametersAsync();
+                           await UpdateInterfaceAsync();
+                       //}));
                     }));
             }
         }
@@ -251,9 +251,10 @@ namespace MpstatsParser.ViewModels
           await GetCategoriesFromAPI(ParserParameters.Params.GetCategoriesIteration);
           await GetAllSubcategoryDetailsFromAPI(ParserParameters.Params.GetSubcategoryInfoIteration);
         }
+
         async Task GetCategoriesFromAPI(int iteration = 0)
         {
-            await Dispatcher.CurrentDispatcher.InvokeAsync(async()  =>
+            await Task.Run(async()  =>
             {
                 ParserParameters.Params.Rubricator = MpstatsAPI.GetRubricator();
                 try
@@ -273,13 +274,13 @@ namespace MpstatsParser.ViewModels
 
                                 isPaused = false;
                                 var rub = ParserParameters.Params.Rubricator[i];
-                                CurrentAction = $"Загрузка списка категорий : {rub.Path}";
+                                App.Current.Dispatcher.Invoke(()=> CurrentAction = $"Загрузка списка категорий : {rub.Path}");
                                 SubcategoryModel subcategory = new SubcategoryModel
                                 {
                                     Subcategories = MpstatsAPI.GetSubcategoryInfo(rub.Path, default, DateTime.Now)
                                 };
                                 System.Diagnostics.Debug.WriteLine(i + "  " + rub.Path);
-                                ParserParameters.Params.Categories.Add(subcategory);
+                               App.Current.Dispatcher.Invoke(()=> ParserParameters.Params.Categories.Add(subcategory));
                             }
                         }
                         if (!isPaused)
